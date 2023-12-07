@@ -1,0 +1,816 @@
+32bit addition 
+
+; adding 12345678H and 0000FFFFH
+
+.MODEL SMALL
+.DATA
+    data1msb   DW   1234H
+    data1lsb   DW   5678H
+    data2msb   DW   0000H
+    data2lsb   DW   0FFFFH
+    resultlsb  DW   ?
+    resultmsb  DW   ?
+.CODE
+.STARTUP
+    MOV     AX,   data1lsb
+    MOV     BX,   data1msb
+
+    MOV     CX,   data2lsb
+    MOV     DX,   data2msb
+
+    ADD     AX,   CX
+    ADC     BX,   DX
+
+    MOV     resultlsb,  AX
+    MOV     resultmsb,  BX
+.EXIT
+END
+
+32bit subtraction 
+
+; subtracting 0000FFFFH from 12345678H
+
+.MODEL SMALL
+.DATA
+    data1msb   DW   1234H
+    data1lsb   DW   5678H
+    data2msb   DW   0000H
+    data2lsb   DW   0FFFFH
+    resultlsb  DW   ?
+    resultmsb  DW   ?
+.CODE
+.STARTUP
+    MOV     AX,   data1lsb
+    MOV     BX,   data1msb
+
+    MOV     CX,   data2lsb
+    MOV     DX,   data2msb
+
+    SUB     AX,   CX
+    SBB     BX,   DX
+
+    MOV     resultlsb,  AX
+    MOV     resultmsb,  BX
+.EXIT
+END
+
+32bit multiplication 
+
+.MODEL SMALL
+.DATA
+    ; Split the two 32-bit integers into four 16-bit variables
+    n1_low DW 5678h
+    n1_high DW 1234h
+    n2_low DW 2222h
+    n2_high DW 1111h
+    result_low DW ?
+    result_mid DW ?
+    result_high DW ?
+    carry1 DW 0
+    carry2 DW 0
+
+.CODE
+.STARTUP
+    ; Initialize the result variables
+    MOV result_low, 0
+    MOV result_mid, 0
+    MOV result_high, 0
+
+    ; Perform the 16-bit multiplication for the low parts
+    MOV AX, n1_low
+    MUL n2_low
+    ADD result_low, AX  ; Add the low part of the result
+
+    ; Calculate carry for the middle part
+    MOV AX, 0
+    ADC AX, 0  ; Check if the low part caused a carry
+    ADD result_mid, AX
+
+    ; Perform the 16-bit multiplication for the cross parts
+    MOV AX, n1_low
+    MUL n2_high
+    ADD result_mid, AX
+
+    MOV AX, n1_high
+    MUL n2_low
+    ADD result_mid, AX
+
+    ; Calculate carry for the high part
+    MOV AX, 0
+    ADC AX, 0  ; Check if the cross parts caused a carry
+    ADD result_high, AX
+
+    ; Perform the 16-bit multiplication for the high parts
+    MOV AX, n1_high
+    MUL n2_high
+    ADD result_high, AX
+
+    CALL disp
+    MOV AH, 4Ch
+    INT 21h
+
+disp PROC NEAR
+    MOV CX, 16  ; Display 16 digits
+
+up:
+    ; Load digits from result_high, result_mid, and result_low
+    MOV AX, result_high
+    ROL AX, 4
+    MOV result_high, AX
+
+    MOV AX, result_mid
+    ROL AX, 4
+    MOV result_mid, AX
+
+    MOV AX, result_low
+    ROL AX, 4
+    MOV result_low, AX
+
+    ; Extract and display the least significant digit
+    MOV AX, result_low  ; Use AX for AND operation
+    AND AX, 0Fh
+    CMP AL, 0Ah
+    JAE dl
+    ADD AL, 7
+
+dl:
+    ADD AL, 30h
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+    ; Decrement the counter and continue
+    DEC CX
+    JNZ up
+    RET
+
+disp ENDP
+
+MOV AX, 4C00h
+INT 21h
+
+END
+
+32bit division 
+
+.MODEL SMALL
+.DATA
+    ; Split the two 32-bit integers into four 16-bit variables
+    n1_low DW 5678h
+    n1_high DW 1234h
+    n2_low DW 2222h
+    n2_high DW 1111h
+    result_low DW ?
+    result_mid DW ?
+    result_high DW ?
+    carry1 DW 0
+    carry2 DW 0
+
+.CODE
+.STARTUP
+    ; Initialize the result variables
+    MOV result_low, 0
+    MOV result_mid, 0
+    MOV result_high, 0
+
+    ; Perform the 16-bit multiplication for the low parts
+    MOV AX, n1_low
+    MUL n2_low
+    ADD result_low, AX  ; Add the low part of the result
+
+    ; Calculate carry for the middle part
+    MOV AX, 0
+    ADC AX, 0  ; Check if the low part caused a carry
+    ADD result_mid, AX
+
+    ; Perform the 16-bit multiplication for the cross parts
+    MOV AX, n1_low
+    MUL n2_high
+    ADD result_mid, AX
+
+    MOV AX, n1_high
+    MUL n2_low
+    ADD result_mid, AX
+
+    ; Calculate carry for the high part
+    MOV AX, 0
+    ADC AX, 0  ; Check if the cross parts caused a carry
+    ADD result_high, AX
+
+    ; Perform the 16-bit multiplication for the high parts
+    MOV AX, n1_high
+    MUL n2_high
+    ADD result_high, AX
+
+    CALL disp
+    MOV AH, 4Ch
+    INT 21h
+
+disp PROC NEAR
+    MOV CX, 16  ; Display 16 digits
+
+up:
+    ; Load digits from result_high, result_mid, and result_low
+    MOV AX, result_high
+    ROL AX, 4
+    MOV result_high, AX
+
+    MOV AX, result_mid
+    ROL AX, 4
+    MOV result_mid, AX
+
+    MOV AX, result_low
+    ROL AX, 4
+    MOV result_low, AX
+
+    ; Extract and display the least significant digit
+    MOV AX, result_low  ; Use AX for AND operation
+    AND AX, 0Fh
+    CMP AL, 0Ah
+    JAE dl
+    ADD AL, 7
+
+dl:
+    ADD AL, 30h
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+    ; Decrement the counter and continue
+    DEC CX
+    JNZ up
+    RET
+
+disp ENDP
+
+MOV AX, 4C00h
+INT 21h
+
+END
+
+32bit bcd addition
+
+; doing bcd addition with 12345678H and 00000022H
+
+.MODEL SMALL
+.486
+.DATA
+    data1   DD    12345678H
+    data2   DD    00000022H
+    result  DD    ?
+.CODE
+.STARTUP
+    MOV     EBX,  data1
+    MOV     EDX,  data2
+    
+    ADD     DL,   BL
+    MOV     AL,   DL
+    DAA
+    MOV     CL,   AL
+
+    ADC     DH,   BH
+    MOV     AL,   DH
+    DAA
+    MOV     CH,   AL
+
+    BSWAP   ECX
+
+    SHR     EBX,  16
+    SHR     EDX,  16
+
+    ADC     DL,   BL
+    MOV     AL,   DL
+    DAA
+    MOV     CH,   AL
+
+    ADC     DH,   BH
+    MOV     AL,   DH
+    DAA
+    MOV     CL,   AL
+
+    BSWAP   ECX
+
+    MOV     result, ECX
+.EXIT
+END
+
+32bit bcd subtraction 
+
+; doing bcd subtraction with 12345678H and 00000022H
+
+.MODEL SMALL
+.486
+.DATA
+    data1   DD    12345678H
+    data2   DD    00000022H
+    result  DD    ?
+.CODE
+.STARTUP
+    MOV     EDX,  data1
+    MOV     EBX,  data2
+    
+    SUB     DL,   BL
+    MOV     AL,   DL
+    DAS
+    MOV     CL,   AL
+
+    SBB     DH,   BH
+    MOV     AL,   DH
+    DAS
+    MOV     CH,   AL
+
+    BSWAP   ECX
+
+    SHR     EBX,  16
+    SHR     EDX,  16
+
+    SBB     DL,   BL
+    MOV     AL,   DL
+    DAS
+    MOV     CH,   AL
+
+    SBB     DH,   BH
+    MOV     AL,   DH
+    DAS
+    MOV     CL,   AL
+
+    BSWAP   ECX
+
+    MOV     result, ECX
+.EXIT
+END
+
+Binary to ascii 
+
+.model small
+.data
+input db 10,13,"Enter an 8-bit binary number: $"
+output db 10,13,"The ASCII code is: $"
+arr db ?
+.code
+.startup
+    mov ah,09h
+    mov dx,offset input
+    int 21h
+
+    mov bl,00h
+    mov cl,08h
+
+i1:
+    mov ah,01h
+    int 21h
+    sub al,30h
+    shl bl,1
+    add bl,al
+    loop i1
+
+    mov ah,09h
+    mov dx,offset output
+    int 21h
+
+    mov ah,02h
+    mov dl,bl
+    int 21h
+
+    mov ah,4Ch
+    int 21h
+
+end
+
+ascii to binary 
+
+.model small
+.data
+input db 10,13,"Enter an ASCII character: $"
+output db 10,13,"The binary value is: $"
+binaryValue db 8 dup(?) ; To store the binary value
+.code
+.startup
+    mov ah, 09h
+    mov dx, offset input
+    int 21h
+
+    mov cx, 8 ; 8 bits for ASCII to binary conversion
+
+    mov ah, 01h
+    int 21h ; Read a character from the user
+
+    ; Convert the ASCII character to binary
+    sub al, 30h ; Subtract '0' to convert to a number (0-9)
+    cmp al, 1
+    jbe validInput ; Check if the input is a valid binary digit
+
+invalidInput:
+    ; Display an error message for invalid input
+    mov ah, 09h
+    mov dx, offset invalidMsg
+    int 21h
+    jmp endProgram
+
+validInput:
+    mov dl, al
+
+convertLoop:
+    test cx, 1 ; Check if we have processed 8 bits
+    jz skipBit ; If yes, skip this bit
+    mov al, 0 ; Clear AL to store the bit
+
+saveBit:
+    ; Store the bit in the binaryValue array
+    shl byte ptr [binaryValue], 1
+    or byte ptr [binaryValue], al
+
+skipBit:
+    shr cx, 1 ; Move to the next bit
+    loop convertLoop
+
+    mov ah, 09h
+    mov dx, offset output
+    int 21h
+
+    ; Display the binary value
+    mov ah, 09h
+    lea dx, binaryValue
+    int 21h
+
+endProgram:
+    mov ah, 4Ch
+    int 21h
+
+invalidMsg db 10,13,"Invalid input. Please enter a valid binary digit (0 or 1).$"
+
+sorting 
+
+DATA SEGMENT
+STRING1 DB 99H,12H,56H,45H,36H
+DATA ENDS
+ 
+CODE SEGMENT
+ASSUME CS:CODE,DS:DATA
+START: MOV AX,DATA
+MOV DS,AX
+ 
+MOV CH,04H
+ 
+UP2: MOV CL,04H
+LEA SI,STRING1
+ 
+UP1: MOV AL,[SI]
+MOV BL,[SI+1]
+CMP AL,BL
+JC DOWN
+MOV DL,[SI+1]
+XCHG [SI],DL
+MOV [SI+1],DL
+ 
+DOWN: INC SI
+DEC CL
+JNZ UP1
+DEC CH
+JNZ UP2
+ 
+INT 3
+CODE ENDS
+END START
+
+Linear search 
+
+.MODEL SMALL
+.DATA
+    prompt0 DB    'Enter Length of Array (<=10): $'
+    prompt1 DB    13, 10, 'Enter Elements: $'
+    prompt2 DB    13, 10, 'Enter Key: $'
+    msg1    DB    13, 10, 'Element Not Found in array!$'
+    msg2    DB    13, 10, 'Element Found in array!$'
+    array   DB    10 DUP(?)
+    len     DW    ?
+    key     DB    ?
+.CODE
+.STARTUP
+    LEA     DX,   prompt0
+    MOV     AH,   09H
+    INT     21H
+
+    MOV     AH,   01H
+    INT     21H
+    MOV     AH,   00H
+    SUB     AL,   30H
+    MOV     len,  AX
+
+    LEA     DX,   prompt1
+    MOV     AH,   09H
+    INT     21H
+
+    LEA     SI,   array
+    MOV     AL,   key
+    MOV     CX,   len
+
+input:
+    MOV     AH,   01H
+    INT     21H
+    MOV     [SI], AL
+    INC     SI
+    MOV     DL,   20H
+    MOV     AH,   02H
+    INT     21H
+    LOOP    input
+
+    LEA     DX,   prompt2
+    MOV     AH,   09H
+    INT     21H
+
+    MOV     AH,   01H
+    INT     21H
+    MOV     key,  AL
+
+    LEA     SI,   array
+    MOV     CX,   len
+
+search:
+    MOV     BL,   [SI]
+    CMP     AL,   BL
+    JE      found
+    INC     SI
+    LOOP    search
+    LEA     DX,   msg1
+    MOV     AH,   09H
+    INT     21H
+    JMP     final
+
+found:
+    LEA     DX,   msg2
+    MOV     AH,   09H
+    INT     21H
+
+final:
+.EXIT
+END
+
+Binary search 
+
+.MODEL SMALL
+.DATA
+    prompt0 DB    'Enter Length of Array (<=10): $'
+    prompt1 DB    13, 10, 'Enter Elements (Sorted): $'
+    prompt2 DB    13, 10, 'Enter Key: $'
+    msg1    DB    13, 10, 'Element Not Found in array!$'
+    msg2    DB    13, 10, 'Element Found in array!$'
+    array   DB    10 DUP(?)
+    len     DW    ?
+    key     DB    ?
+    found   DB    ?
+.CODE
+.STARTUP
+    LEA     DX,   prompt0
+    MOV     AH,   09H
+    INT     21H
+
+    MOV     AH,   01H
+    INT     21H
+    MOV     AH,   00H
+    SUB     AL,   30H
+    MOV     len,  AX
+
+    LEA     DX,   prompt1
+    MOV     AH,   09H
+    INT     21H
+
+    LEA     SI,   array
+    MOV     AL,   key
+    MOV     CX,   len
+
+input:
+    MOV     AH,   01H
+    INT     21H
+    MOV     [SI], AL
+    INC     SI
+    MOV     DL,   20H
+    MOV     AH,   02H
+    INT     21H
+    LOOP    input
+
+    LEA     DX,   prompt2
+    MOV     AH,   09H
+    INT     21H
+
+    MOV     AH,   01H
+    INT     21H
+    MOV     key,  AL
+
+    LEA     SI,   array
+    MOV     CX,   len
+
+    ; Binary search starts here
+    XOR     CX, CX          ; Set CX to 0 (low index)
+    MOV     DX, len         ; Set DX to len (high index)
+    DEC     DX              ; Adjust DX to len - 1
+    CALL    BinarySearch
+
+    ; Check the result
+    CMP     found, 1
+    JE      found_msg
+    JMP     not_found_msg
+
+found_msg:
+    LEA     DX, msg2
+    MOV     AH, 09H
+    INT     21H
+    JMP     final
+
+not_found_msg:
+    LEA     DX, msg1
+    MOV     AH, 09H
+    INT     21H
+
+final:
+.EXIT
+
+BinarySearch:
+    PUSH    SI
+    MOV     SI, DX          ; SI will be the high index
+    ADD     SI, CX          ; SI = CX + DX (middle index)
+    SHR     SI, 1           ; SI = SI / 2
+    MOV     AL, [array + SI]
+    CMP     AL, key
+    JE      KeyFound
+    JB      LowerHalf
+    JA      UpperHalf
+
+KeyFound:
+    MOV     found, 1
+    POP     SI
+    RET
+
+LowerHalf:
+    DEC     SI
+    PUSH    SI
+    PUSH    CX
+    CALL    BinarySearch
+    POP     CX
+    POP     SI
+    RET
+
+UpperHalf:
+    INC     SI
+    PUSH    SI
+    PUSH    DX
+    CALL    BinarySearch
+    POP     DX
+    POP     SI
+    RET
+
+Add two arrays 
+
+.model small
+.data
+    array1  db 5 DUP(?)  ; Array to store the first input
+    array2  db 5 DUP(?)  ; Array to store the second input
+    result  db 5 DUP(?)  ; Array to store the result in decimal format
+    array_size db 5
+    result_prompt db 13, 10, 'Result Array in Decimal: $'
+    input_prompt db 13, 10, 'Enter 5 elements for the array (e.g., 1 2 3 4 5): $'
+.code
+.startup
+    ; Prompt the user to enter the first array
+    mov ah, 09h
+    lea dx, input_prompt
+    int 21h
+
+    ; Read the first array from the user
+    mov cx, 5
+    lea di, array1
+    call read_array
+
+    ; Prompt the user to enter the second array
+    mov ah, 09h
+    lea dx, input_prompt
+    int 21h
+
+    ; Read the second array from the user
+    mov cx, 5
+    lea di, array2
+    call read_array
+
+    ; Add the two arrays and store the result in the 'result' array
+    mov cx, 5
+    lea si, array1
+    lea di, array2
+    lea bx, result
+add_arrays:
+    mov al, [si]
+    add al, [di]
+    mov [bx], al
+    inc si
+    inc di
+    inc bx
+    loop add_arrays
+
+    ; Print the result array in decimal format
+    mov ah, 09h
+    lea dx, result_prompt
+    int 21h
+    mov cx, 5
+    lea bx, result
+    call print_result
+
+exit:
+    int 20h
+
+read_array:
+    mov ah, 01h
+    int 21h
+    mov dl, al
+    sub dl, 30h
+    mov [di], dl
+    inc di
+    loop read_array
+    ret
+
+print_result:
+    mov cx, 5
+    mov ah, 02h
+print_loop:
+    add dl, 30h   ; Convert to ASCII character
+    int 21h
+    inc bx
+    loop print_loop
+    ret
+
+subtract two arrays 
+
+.model small
+.data
+    array1  db 5 DUP(?)  ; Array to store the first input
+    array2  db 5 DUP(?)  ; Array to store the second input
+    result  db 5 DUP(?)  ; Array to store the result in decimal format
+    array_size db 5
+    result_prompt db 13, 10, 'Result Array in Decimal: $'
+    input_prompt db 13, 10, 'Enter 5 elements for the array (e.g., 1 2 3 4 5): $'
+.code
+.startup
+    ; Prompt the user to enter the first array
+    mov ah, 09h
+    lea dx, input_prompt
+    int 21h
+
+    ; Read the first array from the user
+    mov cx, 5
+    lea di, array1
+    call read_array
+
+    ; Prompt the user to enter the second array
+    mov ah, 09h
+    lea dx, input_prompt
+    int 21h
+
+    ; Read the second array from the user
+    mov cx, 5
+    lea di, array2
+    call read_array
+
+    ; Add the two arrays and store the result in the 'result' array
+    mov cx, 5
+    lea si, array1
+    lea di, array2
+    lea bx, result
+add_arrays:
+    mov al, [si]
+    add al, [di]
+    mov [bx], al
+    inc si
+    inc di
+    inc bx
+    loop add_arrays
+
+    ; Print the result array in decimal format
+    mov ah, 09h
+    lea dx, result_prompt
+    int 21h
+    mov cx, 5
+    lea bx, result
+    call print_result
+
+exit:
+    int 20h
+
+read_array:
+    mov ah, 01h
+    int 21h
+    mov dl, al
+    sub dl, 30h
+    mov [di], dl
+    inc di
+    loop read_array
+    ret
+
+print_result:
+    mov cx, 5
+    mov ah, 02h
+print_loop:
+    add dl, 30h   ; Convert to ASCII character
+    int 21h
+    inc bx
+    loop print_loop
+    ret
+
+
